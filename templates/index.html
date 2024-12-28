@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico" type="image/jpeg">
+    <title>QR Code Generator</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #79D7BE, #005F56);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: #ffffff;
+            color: #333333;
+            border-radius: 15px;
+            box-shadow: 0px 15px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .header {
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #005F56;
+            font-weight: bold;
+        }
+
+        .form-container {
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #005F56;
+        }
+
+        input[type="text"],
+        input[type="color"],
+        select,
+        button {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        input[type="text"],
+        select {
+            background: #f9f9f9;
+            color: #333333;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #79D7BE;
+            background: #ffffff;
+        }
+
+        input[type="color"] {
+            height: 50px;
+            cursor: pointer;
+            background: #f9f9f9;
+            border: none;
+        }
+
+        button {
+            background: linear-gradient(135deg, #79D7BE, #005F56);
+            color: #ffffff;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #005F56, #79D7BE);
+        }
+
+        .qr-output {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .qr-output h2 {
+            font-size: 20px;
+            color: #005F56;
+        }
+
+        .qr-output img {
+            margin-top: 15px;
+            border: 5px solid #e0e0e0;
+            border-radius: 10px;
+            max-width: 100%;
+        }
+
+        a.download-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background: #005F56;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        a.download-btn:hover {
+            background: #79D7BE;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>QR Code Generator</h1>
+        </div>
+        <div class="form-container">
+            <form id="qrForm">
+                <div class="form-group">
+                    <label for="data">Data (URL/Text):</label>
+                    <input type="text" id="data" name="data" placeholder="Enter URL or Text" required>
+                </div>
+                <div class="form-group">
+                    <label for="fgColor">Foreground Color:</label>
+                    <input type="color" id="fgColor" name="fgColor" value="#000000">
+                </div>
+                <div class="form-group">
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" name="bgColor" value="#ffffff">
+                </div>
+                <div class="form-group">
+                    <label for="shape">QR Code Shape:</label>
+                    <select id="shape" name="shape">
+                        <option value="square">Square</option>
+                        <option value="circle">Circle</option>
+                    </select>
+                </div>
+                <button type="button" id="generateBtn">Generate QR Code 🚀</button>
+            </form>
+        </div>
+        <div class="qr-output" id="qrOutput" style="display: none;">
+            <h2>Your QR Code:</h2>
+            <img id="qrImage" src="" alt="Generated QR Code">
+            <a id="downloadBtn" class="download-btn" download="qr_code.png">Download QR Code</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const data = document.getElementById('data').value;
+            const fgColor = document.getElementById('fgColor').value;
+            const bgColor = document.getElementById('bgColor').value;
+            const shape = document.getElementById('shape').value;
+
+            if (!data) {
+                alert('Please enter data to generate the QR Code.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('data', data);
+            formData.append('fgColor', fgColor);
+            formData.append('bgColor', bgColor);
+            formData.append('shape', shape);
+
+            fetch('/generate_qr', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(`Error: ${data.error}`);
+                } else {
+                    const qrImage = document.getElementById('qrImage');
+                    const downloadBtn = document.getElementById('downloadBtn');
+                    qrImage.src = `data:image/png;base64,${data.qr_code}`;
+                    downloadBtn.href = qrImage.src;
+                    document.getElementById('qrOutput').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error generating QR Code:', error);
+            });
+        });
+    </script>
+</body>
+</html>
+
+
